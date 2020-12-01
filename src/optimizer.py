@@ -57,3 +57,45 @@ class GradientDescent:
 
         print(f'End of optimize: iter {i+1} - cost {cost} - theta {theta.T}')
         return theta, cost_history
+
+    def optimize_with_validation(self,
+                                 x_train: ARR, y_train: ARR,
+                                 x_val: ARR, y_val: ARR,
+                                 theta: ARR, cost_function: ARR_FUNC) -> tp.Tuple[ARR, ARR, ARR]:
+        """Runs gradient descent method until one of stop conditions is reachead:
+        1. maximum number of iterations;
+        2. change in cost function smaller than tolerance.
+
+        :param x_train: Training feature variables matrix.
+        :type x_train: ``numpy.ndarray``
+        :param y_train: Training target variable vector.
+        :type y_train: ``numpy.ndarray``
+        :param x_val: Validation feature variables matrix.
+        :type x_val: ``numpy.ndarray``
+        :param y_val: Validation target variable vector.
+        :type y_val: ``numpy.ndarray``
+        :param theta: Model parameters.
+        :type theta: ``numpy.ndarray``
+        :param cost_function: Implements cost function and its gradient given x_train, y_train and theta.
+        :type cost_function: ``callable``
+        :return: Final model parameters and history of cost function for training and validation.
+        :rtype: ``tuple`` of ``numpy.ndarray``, ``numpy.ndarray``
+        """
+        train_cost = np.zeros(self.max_iter, dtype=np.float64)
+        val_cost = np.zeros(self.max_iter, dtype=np.float64)
+    
+        for i in range(0, self.max_iter):
+            train_cost[i], gradient = cost_function(x_train, y_train, theta)
+            val_cost[i], _ = cost_function(x_val, y_val, theta)
+            
+            theta = theta - self.alpha * gradient
+            
+            if (i > 1) and (abs(train_cost[i - 1] - train_cost[i]) < self.tolerance):
+                print(f'stop by tolerance criteria: {train_cost[i] - train_cost[i - 1]} < {self.tolerance}')
+                train_cost = train_cost[:i + 1]
+                val_cost = val_cost[:i + 1]
+                break
+    
+        print(f'End of optimize: iter {i+1} - train cost {train_cost[i]} / val cost: {val_cost[i]}')
+        print(f'- theta {theta.T}')
+        return theta, train_cost, val_cost
